@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Hardware Kahoot! Style Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10 and IE 11 */
+            user-select: none; /* Standard syntax */
+        }
+        .kahoot-bg {
+            background-color: #46178F;
+            background-image:
+                radial-gradient(at 20% 25%, hsla(212,80%,45%,1) 0px, transparent 50%),
+                radial-gradient(at 78% 18%, hsla(287,83%,40%,1) 0px, transparent 50%),
+                radial-gradient(at 49% 82%, hsla(190,70%,45%,1) 0px, transparent 50%),
+                radial-gradient(at 82% 82%, hsla(340,80%,55%,1) 0px, transparent 50%);
+        }
+        .answer-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .answer-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .correct {
+            animation: pulse-correct 1s ease-in-out;
+        }
+        .incorrect {
+            animation: shake-incorrect 0.5s ease-in-out;
+            opacity: 0.5;
+        }
+        @keyframes pulse-correct {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake-incorrect {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .timer-bar-inner {
+            transition: width 1s linear;
+        }
+    </style>
+</head>
+<body class="kahoot-bg text-white min-h-screen flex items-center justify-center p-4">
+
+    <!-- Audio Elements (Fallback) -->
+    <audio id="correct-sound" src="correct.mp3"></audio>
+    <audio id="wrong-sound" src="wrong.mp3"></audio>
+
+    <div id="quiz-container" class="w-full max-w-4xl mx-auto">
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center">
+            <h1 class="text-5xl md:text-7xl font-black mb-4 drop-shadow-lg">PC Hardware Quiz!</h1>
+            <p class="text-xl md:text-2xl mb-8 text-gray-200">Test your knowledge of computer components.</p>
+            <button id="start-btn" class="bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-4 px-12 rounded-lg shadow-2xl transition-transform transform hover:scale-105">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4">
+                <div id="question-counter" class="text-lg font-bold">Question 1/32</div>
+                <div id="score" class="text-lg font-bold">Score: 0</div>
+            </div>
+
+            <!-- Timer -->
+            <div class="w-full bg-gray-700 rounded-full h-4 mb-6">
+                <div id="timer-bar" class="bg-white h-4 rounded-full timer-bar-inner" style="width: 100%;"></div>
+            </div>
+
+            <!-- Question -->
+            <div class="bg-white text-gray-800 p-8 rounded-lg shadow-xl mb-6 min-h-[150px] flex items-center justify-center">
+                <h2 id="question-text" class="text-2xl md:text-4xl font-bold text-center">Question text goes here...</h2>
+            </div>
+
+            <!-- Answers -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button data-answer-id="0" class="answer-btn bg-red-600 p-6 rounded-lg shadow-lg flex items-center text-lg md:text-xl font-bold">
+                    <div class="w-10 h-10 flex-shrink-0 mr-4 bg-white/20 flex items-center justify-center rounded-md">▲</div>
+                    <span class="answer-text-0">Answer 1</span>
+                </button>
+                <button data-answer-id="1" class="answer-btn bg-blue-600 p-6 rounded-lg shadow-lg flex items-center text-lg md:text-xl font-bold">
+                    <div class="w-10 h-10 flex-shrink-0 mr-4 bg-white/20 flex items-center justify-center rounded-md">◆</div>
+                    <span class="answer-text-1">Answer 2</span>
+                </button>
+                <button data-answer-id="2" class="answer-btn bg-yellow-500 p-6 rounded-lg shadow-lg flex items-center text-lg md:text-xl font-bold">
+                    <div class="w-10 h-10 flex-shrink-0 mr-4 bg-white/20 flex items-center justify-center rounded-md">●</div>
+                    <span class="answer-text-2">Answer 3</span>
+                </button>
+                <button data-answer-id="3" class="answer-btn bg-green-600 p-6 rounded-lg shadow-lg flex items-center text-lg md:text-xl font-bold">
+                    <div class="w-10 h-10 flex-shrink-0 mr-4 bg-white/20 flex items-center justify-center rounded-md">■</div>
+                    <span class="answer-text-3">Answer 4</span>
+                </button>
+            </div>
+            
+            <div class="text-center mt-6">
+                <button id="next-btn" class="hidden bg-gray-800 hover:bg-gray-900 text-white text-xl font-bold py-3 px-10 rounded-lg shadow-xl">Next</button>
+            </div>
+        </div>
+
+        <!-- Transition Screen -->
+        <div id="transition-screen" class="hidden text-center">
+            <h2 id="transition-title" class="text-5xl font-black mb-8">Next Section: Storage</h2>
+            <button id="continue-btn" class="bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-4 px-12 rounded-lg shadow-2xl transition-transform transform hover:scale-105">
+                Continue
+            </button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden text-center">
+            <h1 class="text-6xl font-black mb-4">Quiz Complete!</h1>
+            <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-8 inline-block">
+                <p class="text-3xl font-bold">Your Final Score:</p>
+                <p id="final-score" class="text-8xl font-black my-4 text-green-500">0</p>
+                <p id="score-percentage" class="text-2xl text-gray-600">You got 0/32 correct!</p>
+            </div>
+            <button id="play-again-btn" class="mt-8 bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-4 px-12 rounded-lg shadow-2xl transition-transform transform hover:scale-105">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Audio setup
+        let audioContext;
+        let correctBuffer, wrongBuffer;
+        const correctAudio = document.getElementById('correct-sound');
+        const wrongAudio = document.getElementById('wrong-sound');
+
+        async function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                    console.log('AudioContext resumed');
+                }
+            }
+            try {
+                // Load correct sound
+                const correctResponse = await fetch('correct.mp3');
+                if (!correctResponse.ok) throw new Error('Failed to load correct.mp3');
+                const correctArrayBuffer = await correctResponse.arrayBuffer();
+                correctBuffer = await audioContext.decodeAudioData(correctArrayBuffer);
+                console.log('Correct sound loaded successfully');
+
+                // Load wrong sound
+                const wrongResponse = await fetch('wrong.mp3');
+                if (!wrongResponse.ok) throw new Error('Failed to load wrong.mp3');
+                const wrongArrayBuffer = await wrongResponse.arrayBuffer();
+                wrongBuffer = await audioContext.decodeAudioData(wrongArrayBuffer);
+                console.log('Wrong sound loaded successfully');
+            } catch (error) {
+                console.error('Error loading audio files:', error);
+                // Fallback to <audio> elements
+                correctAudio.load();
+                wrongAudio.load();
+                console.log('Falling back to <audio> elements');
+            }
+        }
+
+        function playSound(buffer, fallbackAudio) {
+            // Try Web Audio API first
+            if (buffer && audioContext.state === 'running') {
+                try {
+                    const source = audioContext.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(audioContext.destination);
+                    source.start(0);
+                    console.log('Playing sound via Web Audio API');
+                    return;
+                } catch (e) {
+                    console.error('Web Audio API playback failed:', e);
+                }
+            }
+            // Fallback to <audio> element
+            if (fallbackAudio) {
+                fallbackAudio.currentTime = 0;
+                fallbackAudio.play().catch(e => console.error('Fallback audio playback failed:', e));
+                console.log('Playing sound via <audio> element');
+            }
+        }
+
+        const quizData = [
+            { type: 'transition', title: 'Part 1: Core Components' },
+            // Part 1: Core Components
+            { question: "What are the main functions of the CPU?", answers: ["Process instructions, perform calculations, manage data flow", "Store data permanently and manage audio", "Cool the system and provide power", "Display graphics and connect to the internet"], correct: 0 },
+            { question: "What is the role of the Control Unit (CU)?", answers: ["Directs data flow and controls operations of CPU", "Performs all math problems", "Stores frequently used data", "Regulates voltage to the motherboard"], correct: 0 },
+            { question: "What does the ALU (Arithmetic Logic Unit) do?", answers: ["Performs arithmetic and logical operations", "Manages the computer's memory", "Initializes the computer when it boots up", "Sends signals to the monitor"], correct: 0 },
+            { question: "What is CPU cache used for?", answers: ["Stores frequently used data for faster access", "Long-term file storage", "Running the operating system", "Cooling the central processor"], correct: 0 },
+            { question: "What does clock speed measure?", answers: ["Number of cycles per second (GHz)", "How much data can be stored", "The speed of the internet connection", "The physical size of the CPU"], correct: 0 },
+            { question: "What’s the difference between single-core and multi-core CPUs?", answers: ["Single handles one task at a time, multi can handle multiple tasks simultaneously", "Single-core is for laptops; multi-core is for desktops", "Single-core is faster but less efficient", "There is no major difference in performance"], correct: 0 },
+            { question: "What’s the difference between x86, ARM, and RISC-V instruction sets?", answers: ["x86 = desktop/server, ARM = mobile/low power, RISC-V = open-source flexible architecture", "They are different brands of the same type of CPU", "x86 is older, ARM is for Apple devices, and RISC-V is for gaming", "They describe the number of cores a CPU can have"], correct: 0 },
+            { question: "What is the difference between integrated and dedicated GPUs?", answers: ["Integrated shares system resources, dedicated has its own VRAM", "Integrated is faster; dedicated is cheaper", "Integrated is for gaming; dedicated is for office work", "Integrated is a physical card; dedicated is built into the CPU"], correct: 0 },
+            { question: "What is VRAM and why is it important?", answers: ["Video memory, stores graphics data for rendering", "Virtual RAM, used by the OS for multitasking", "Voltage RAM, which helps regulate power", "Volatile RAM, which is the main system memory"], correct: 0 },
+            { question: "What do shaders and cores in GPUs handle?", answers: ["Shaders = effects/lighting, cores = parallel processing tasks", "Shaders cool the GPU; cores process the data", "Shaders manage power; cores handle graphics output", "Shaders connect to the display; cores perform calculations"], correct: 0 },
+            { question: "What is ray-tracing used for?", answers: ["Simulates realistic light and shadows", "Increasing the speed of the GPU", "Compressing video files for storage", "Connecting multiple monitors"], correct: 0 },
+            { question: "What is the function of a motherboard’s chipset?", answers: ["Controls communication between CPU, RAM, storage, and peripherals", "Provides power to all the components", "Cools the motherboard and CPU", "Stores the operating system"], correct: 0 },
+            { question: "What is BIOS/UEFI?", answers: ["Firmware that initializes hardware and loads OS", "The computer's main operating system", "A type of computer virus", "A software for overclocking the CPU"], correct: 0 },
+            { question: "What are PCIe and M.2 slots used for?", answers: ["Expansion cards, GPUs, SSDs, Wi-Fi cards", "Plugging in the power supply", "Connecting USB devices and headphones", "Holding the CPU in place"], correct: 0 },
+            { question: "What do VRMs (Voltage Regulator Modules) do on a motherboard?", answers: ["Regulate voltage to CPU/GPU", "Regulate the speed of the system fans", "Manage the flow of data to the RAM", "Control the RGB lighting on the board"], correct: 0 },
+            { question: "What is the purpose of RAM in a computer?", answers: ["Temporary storage for active processes and data", "Permanent storage for all files and the OS", "To display images on the screen", "To connect the computer to the internet"], correct: 0 },
+            { question: "How do DDR3, DDR4, and DDR5 differ?", answers: ["Generations differ in speed, bandwidth, and efficiency", "They are different physical sizes of RAM sticks", "DDR3 is for laptops, DDR4 for desktops, and DDR5 for servers", "They are made by different manufacturers"], correct: 0 },
+            { question: "What is memory latency?", answers: ["Delay between command and data availability", "The physical time it takes to install RAM", "The total amount of data RAM can hold", "The speed at which RAM transfers data to the CPU"], correct: 0 },
+            { question: "What is the difference between single-channel and dual-channel memory?", answers: ["Dual-channel doubles memory bandwidth", "Single-channel is for one user; dual-channel is for multiple", "Single-channel is half the physical size", "Single-channel is less reliable"], correct: 0 },
+            
+            // Transition to Part 2
+            { type: 'transition', title: 'Part 2: Storage' },
+
+            // Part 2: Storage
+            { question: "What is the main difference between HDD and SSD?", answers: ["HDD = mechanical, slower; SSD = flash memory, faster", "HDD is smaller; SSD is larger", "HDD uses more power; SSD uses less", "HDD is for laptops; SSD is for desktops"], correct: 0 },
+            { question: "What does RPM stand for in HDDs?", answers: ["Revolutions per minute", "Reads per minute", "Rotational performance measurement", "Random-access processing mode"], correct: 0 },
+            { question: "What is NAND flash memory?", answers: ["Non-volatile storage used in SSDs", "A type of very fast RAM", "A component in the CPU cache", "A brand of hard drive"], correct: 0 },
+            { question: "What is the difference between SATA SSD and NVMe SSD?", answers: ["SATA slower, NVMe uses PCIe for higher speed", "SATA is internal, NVMe is external", "SATA is for laptops, NVMe is for servers", "There is no performance difference"], correct: 0 },
+            { question: "What do SLC, MLC, TLC, and QLC stand for in NAND flash?", answers: ["Single/ Multi/ Triple/ Quad Level Cell", "Small/ Medium/ Large/ X-Large Capacity", "Standard/ Mid-range/ Top-tier/ Quality Level Cache", "Solid-state/ Multi-layer/ Turbo/ Quantum Logic Chip"], correct: 0 },
+            { question: "What is a hybrid SSHD?", answers: ["Mix of HDD storage with small SSD cache", "An external solid-state drive", "A hard drive cooled by liquid", "A type of server storage array"], correct: 0 },
+            { question: "Why are optical drives less common today?", answers: ["USB, cloud, and streaming replaced them", "They are too slow to use", "They are not compatible with modern PCs", "They are very expensive to produce"], correct: 0 },
+            
+            // Transition to Part 3
+            { type: 'transition', title: 'Part 3: Power & Cooling' },
+
+            // Part 3: Power & Cooling
+            { question: "What does PSU stand for?", answers: ["Power Supply Unit", "Primary System Utility", "Performance Scaling Unit", "Processor Support Unit"], correct: 0 },
+            { question: "What is the importance of PSU efficiency ratings (80+ Bronze, Gold, etc.)?", answers: ["Indicates power efficiency and quality", "Shows the maximum power output", "Determines the physical size of the PSU", "It is just a marketing term with no real meaning"], correct: 0 },
+            { question: "What is the difference between modular and non-modular PSUs?", answers: ["Modular = detachable cables, non-modular = fixed cables", "Modular PSUs are for liquid cooling, non-modular are for air", "Modular are less efficient than non-modular", "Modular PSUs provide less power"], correct: 0 },
+            { question: "What are the main types of cooling in computers?", answers: ["Air cooling and liquid cooling", "Nitrogen cooling and oil cooling", "Passive cooling and active cooling", "Internal cooling and external cooling"], correct: 0 },
+            { question: "What is the role of thermal paste?", answers: ["Improves heat transfer between CPU/GPU and cooler", "A glue to hold the CPU in place", "Protects components from dust", "An electrical insulator for the motherboard"], correct: 0 },
+            { question: "How do heat pipes work in a cooling system?", answers: ["Transfer heat away using phase change of liquid inside", "They are solid metal bars that conduct heat", "They are filled with a cold gas", "They blow air directly onto the component"], correct: 0 },
+            
+            // Transition to Part 4
+            { type: 'transition', title: 'Part 4: Peripherals & Input/Output' },
+
+            // Part 4: Peripherals & Input/Output
+            { question: "What is the difference between mechanical and membrane keyboards?", answers: ["Mechanical = switches, tactile; Membrane = rubber dome, quieter", "Mechanical is wireless, Membrane is wired", "Mechanical has RGB, Membrane does not", "There is no difference"], correct: 0 },
+            { question: "How do optical mice differ from laser mice?", answers: ["Optical uses LED, laser uses laser for higher precision", "Optical is for gaming, laser is for office work", "Optical is cheaper, laser is more durable", "Laser mice are always wireless"], correct: 0 },
+            { question: "What is an example of an input device besides keyboard and mouse?", answers: ["Scanner, microphone, camera", "Monitor, printer, speakers", "CPU, RAM, GPU", "Windows, macOS, Linux"], correct: 0 },
+            { question: "What’s the difference between LCD, LED, and OLED monitors?", answers: ["LCD = older, LED = backlit, OLED = self-lit pixels", "LED is brighter, LCD is sharper, OLED is faster", "They are just different brand names for the same technology", "LCD is for TVs, LED for monitors, OLED for phones"], correct: 0 },
+            { question: "What do refresh rate and resolution describe in monitors?", answers: ["Refresh rate = Hz updates/sec, resolution = pixel count", "Refresh rate = brightness, resolution = color accuracy", "Refresh rate = size, resolution = shape", "They are interchangeable terms for image quality"], correct: 0 },
+            { question: "What are the main types of printers and their uses?", answers: ["Laser = fast/text, Inkjet = high-quality images, 3D = objects", "Laser = color, Inkjet = black & white, 3D = photos", "All printers function the same way", "Inkjet is for offices, Laser is for home use"], correct: 0 },
+            { question: "What is the main advantage of a 3D printer?", answers: ["Can create physical models and prototypes", "It prints documents very quickly", "It uses less ink than other printers", "It is smaller and more portable"], correct: 0 },
+            { question: "What is the difference between headphones and speakers in terms of output?", answers: ["Headphones = personal, speakers = shared", "Headphones are louder than speakers", "Speakers have better sound quality", "There is no difference in output"], correct: 0 }
+        ];
+
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const transitionScreen = document.getElementById('transition-screen');
+        const resultsScreen = document.getElementById('results-screen');
+
+        const startBtn = document.getElementById('start-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const continueBtn = document.getElementById('continue-btn');
+        const playAgainBtn = document.getElementById('play-again-btn');
+
+        const questionCounterEl = document.getElementById('question-counter');
+        const scoreEl = document.getElementById('score');
+        const timerBar = document.getElementById('timer-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const answerButtons = document.querySelectorAll('.answer-btn');
+        const transitionTitleEl = document.getElementById('transition-title');
+
+        const finalScoreEl = document.getElementById('final-score');
+        const scorePercentageEl = document.getElementById('score-percentage');
+
+        // Quiz State
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let correctAnswersCount = 0;
+        let timer;
+        let timeLeft = 20; // 20 seconds per question
+        const totalQuestions = quizData.filter(item => item.type !== 'transition').length;
+        let currentQuestionNumber = 0;
+
+        function startQuiz() {
+            startScreen.classList.add('hidden');
+            resultsScreen.classList.add('hidden');
+            currentQuestionIndex = 0;
+            currentQuestionNumber = 0;
+            score = 0;
+            correctAnswersCount = 0;
+            scoreEl.textContent = `Score: 0`;
+            initAudio().then(() => {
+                console.log('Audio initialization completed');
+                showQuestion();
+            });
+        }
+
+        function showQuestion() {
+            transitionScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            resetState();
+            
+            const questionData = quizData[currentQuestionIndex];
+            
+            if (questionData.type === 'transition') {
+                showTransitionScreen(questionData.title);
+                return;
+            }
+
+            currentQuestionNumber++;
+            questionCounterEl.textContent = `Question ${currentQuestionNumber}/${totalQuestions}`;
+            questionTextEl.textContent = questionData.question;
+
+            // Shuffle answers
+            const shuffledAnswers = questionData.answers.map((answer, index) => ({ text: answer, originalIndex: index }));
+            shuffledAnswers.sort(() => Math.random() - 0.5);
+            
+            const correctOriginalIndex = questionData.correct;
+            const correctNewIndex = shuffledAnswers.findIndex(item => item.originalIndex === correctOriginalIndex);
+
+            answerButtons.forEach((button, index) => {
+                button.querySelector(`.answer-text-${index}`).textContent = shuffledAnswers[index].text;
+                button.dataset.correct = (index === correctNewIndex);
+            });
+            
+            startTimer();
+        }
+
+        function showTransitionScreen(title) {
+            quizScreen.classList.add('hidden');
+            transitionScreen.classList.remove('hidden');
+            transitionTitleEl.textContent = title;
+        }
+        
+        function resetState() {
+            nextBtn.classList.add('hidden');
+            answerButtons.forEach(button => {
+                button.disabled = false;
+                button.classList.remove('correct', 'incorrect');
+                button.style.opacity = 1;
+                button.style.border = 'none';
+                delete button.dataset.correct;
+            });
+            timeLeft = 20;
+            timerBar.style.width = '100%';
+            timerBar.style.transition = 'none'; // reset transition for immediate effect
+            setTimeout(() => {
+                timerBar.style.transition = 'width 1s linear'; // re-apply transition
+            }, 50);
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerBar.style.width = `${(timeLeft / 20) * 100}%`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    selectAnswer(null); // Timeout
+                }
+            }, 1000);
+        }
+
+        function selectAnswer(selectedButton) {
+            clearInterval(timer);
+            const isCorrect = selectedButton ? selectedButton.dataset.correct === 'true' : false;
+
+            answerButtons.forEach(button => {
+                button.disabled = true;
+                if (button.dataset.correct === 'true') {
+                    button.classList.add('correct');
+                    button.style.border = '4px solid white';
+                } else if (button === selectedButton) {
+                    button.classList.add('incorrect');
+                } else {
+                    button.style.opacity = 0.5;
+                }
+            });
+            
+            if (isCorrect) {
+                correctAnswersCount++;
+                score += 100 + (timeLeft * 5);
+                scoreEl.textContent = `Score: ${score}`;
+                setTimeout(() => playSound(correctBuffer, correctAudio), 100);
+            } else {
+                setTimeout(() => playSound(wrongBuffer, wrongAudio), 100);
+            }
+
+            if (currentQuestionIndex < quizData.length - 1) {
+                nextBtn.classList.remove('hidden');
+            } else {
+                setTimeout(showResults, 1500);
+            }
+        }
+        
+        function showNextQuestion() {
+            currentQuestionIndex++;
+            showQuestion();
+        }
+        
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            finalScoreEl.textContent = score;
+            scorePercentageEl.textContent = `You got ${correctAnswersCount}/${totalQuestions} correct!`;
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', showNextQuestion);
+        continueBtn.addEventListener('click', showNextQuestion);
+        playAgainBtn.addEventListener('click', startQuiz);
+        answerButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                selectAnswer(button);
+            });
+        });
+
+    </script>
+</body>
+</html>
