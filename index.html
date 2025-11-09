@@ -21,27 +21,32 @@
             background-image: linear-gradient(0deg, rgba(255,255,255,0.01) 1px, transparent 1px),
                               linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px);
             background-size: 30px 30px;
+            /* Added to be the anchor for the new ::before pseudo-element */
+            position: relative;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
 
-        /* --- Hero Mouse-Reactive Spotlight --- */
-        /* This pseudo-element will be our spotlight */
-        #hero::before {
+        /* --- Global Mouse-Reactive Spotlight --- */
+        /* This pseudo-element now covers the entire page */
+        body::before {
             content: '';
-            position: absolute;
+            position: fixed; /* Fixed to cover the viewport */
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            /* The gradient is centered on our CSS variables.
-              It's a transparent-to-blue-to-transparent circle.
-            */
+            /* The gradient is centered on our CSS variables (now in px) */
+            /* It starts hidden off-screen */
             background: radial-gradient(
-                circle 400px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                circle 400px at var(--mouse-x, -500px) var(--mouse-y, -500px),
                 rgba(29, 78, 216, 0.15), /* Faint blue glow */
                 transparent 80%
             );
-            z-index: 0;
+            /* Sits behind content (z-10) but above body bg */
+            z-index: 0; 
             transition: background 0.1s ease-out;
+            /* CRITICAL: Allows clicks to pass through */
+            pointer-events: none; 
         }
 
         /* --- Card Styles --- */
@@ -150,13 +155,12 @@
 
         <!-- 
           Hero Section 
-          'relative' allows the ::before pseudo-element to be positioned
-          'isolate-grid' creates a stacking context for z-index
+          'isolate' creates a stacking context
         -->
-        <header id="hero" class="relative isolate text-center p-12 md:p-20 rounded-2xl overflow-hidden mb-12" style="background-color: rgba(12, 12, 18, 0.8);">
+        <header id="hero" class="relative isolate text-center p-12 md:p-20 rounded-2xl overflow-hidden mb-12" style="background-color: rgba(12, 12, 18, 0.6);">
             <!-- Content must be relative and z-10 to sit above the pseudo-element -->
             <div class="relative z-10">
-                <h1 class="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-300 to-indigo-300 mb-4">
+                <h1 class="text-5xl md:text-7xl font-black uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-300 to-indigo-300 mb-4">
                     POWER BANK
                 </h1>
                 <p class="text-xl md:text-2xl text-indigo-200 mb-2">
@@ -237,7 +241,8 @@
         </main>
 
         <!-- Footer -->
-        <footer class="text-center text-gray-500 mt-12 pb-8">
+        <!-- Added relative and z-10 to ensure it sits above the spotlight -->
+        <footer class="relative z-10 text-center text-gray-500 mt-12 pb-8">
         </footer>
     </div>
 
@@ -285,29 +290,23 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
-            // --- Hero Mouse-Move Spotlight Effect ---
-            const hero = document.getElementById('hero');
-            if (hero) {
-                hero.addEventListener('mousemove', (e) => {
-                    // Get the bounding box of the hero element
-                    const rect = hero.getBoundingClientRect();
-                    
-                    // Calculate mouse position *relative* to the element
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    
-                    // Update the CSS custom properties
-                    // We use percentages so it's responsive
-                    hero.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
-                    hero.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
-                });
+            // --- Global Mouse-Move Spotlight Effect ---
+            const body = document.body;
+            
+            // Listen for mouse movement on the whole document
+            document.addEventListener('mousemove', (e) => {
+                // Update CSS variables to the cursor's pixel coordinates
+                body.style.setProperty('--mouse-x', `${e.clientX}px`);
+                body.style.setProperty('--mouse-y', `${e.clientY}px`);
+            });
 
-                // Reset when mouse leaves
-                hero.addEventListener('mouseleave', () => {
-                    hero.style.setProperty('--mouse-x', '50%');
-                    hero.style.setProperty('--mouse-y', '50%');
-                });
-            }
+            // Reset when mouse leaves the window
+            document.documentElement.addEventListener('mouseleave', () => {
+                // Move the spotlight off-screen
+                body.style.setProperty('--mouse-x', '-500px');
+                body.style.setProperty('--mouse-y', '-500px');
+            });
+
 
             // --- Chapter Links Data ---
             const chapterLinks = [
